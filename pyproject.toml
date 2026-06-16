@@ -23,3 +23,10 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 package = false
+
+
+[project]
+name = "course-gen-ai"
+version = "0.1.0"
+
+
