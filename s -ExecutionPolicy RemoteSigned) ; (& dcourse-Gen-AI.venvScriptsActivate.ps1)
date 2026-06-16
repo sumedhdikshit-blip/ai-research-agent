@@ -1,0 +1,97 @@
+[1mdiff --git a/2_agent_with_tools/agent_with_tools.py b/2_agent_with_tools/agent_with_tools.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..343d26d[m
+[1m--- /dev/null[m
+[1m+++ b/2_agent_with_tools/agent_with_tools.py[m
+[36m@@ -0,0 +1,73 @@[m
+[32m+[m[32mfrom dotenv import load_dotenv[m
+[32m+[m[32mimport os[m
+[32m+[m
+[32m+[m[32mfrom langchain.agents import create_react_agent, AgentExecutor[m
+[32m+[m[32mfrom langchain.tools import tool[m
+[32m+[m[32mfrom langchain_groq import ChatGroq[m
+[32m+[m[32mfrom langchain import hub[m
+[32m+[m[32mimport yfinance as yf[m
+[32m+[m
+[32m+[m[32mload_dotenv()[m
+[32m+[m
+[32m+[m[32mllm = ChatGroq(model="llama3-70b-8192", temperature=0)[m
+[32m+[m
+[32m+[m[32mtools_list = [][m
+[32m+[m
+[32m+[m[32m@tool[m
+[32m+[m[32mdef get_stock_price(ticker: str) -> str:[m
+[32m+[m[32m    """Get the current stock price for a given ticker symbol."""[m
+[32m+[m[32m    stock = yf.Ticker(ticker)[m
+[32m+[m[32m    price = stock.info.get("currentPrice")[m
+[32m+[m[32m    return str(price)[m
+[32m+[m
+[32m+[m[32m@tool[m
+[32m+[m[32mdef get_stock_history(ticker: str, period: str = "1mo") -> str:[m
+[32m+[m[32m    """Get stock price history. Period can be 1d, 5d, 1mo, 3mo, 6mo, 1y."""[m
+[32m+[m[32m    stock = yf.Ticker(ticker)[m
+[32m+[m[32m    hist = stock.history(period=period)[m
+[32m+[m[32m    return hist["Close"].tail(10).to_string()[m
+[32m+[m
+[32m+[m[32m@tool[m
+[32m+[m[32mdef get_market_valuation_of_private_company(company_name: str) -> str:[m
+[32m+[m[32m    """Return the market valuation of a private company in billion USD."""[m
+[32m+[m[32m    company_valuations = {[m
+[32m+[m[32m        "SpaceX": 137.0,[m
+[32m+[m[32m        "Stripe": 95.0,[m
+[32m+[m[32m        "Airbnb": 100.0,[m
+[32m+[m[32m    }[m
+[32m+[m[32m    valuation = company_valuations.get(company_name, 0.0)[m
+[32m+[m[32m    return f"{valuation} billion USD"[m
+[32m+[m
+[32m+[m[32m@tool[m
+[32m+[m[32mdef compare_companies(company1: str, company2: str) -> str:[m
+[32m+[m[32m    """Compare market valuations of two private companies."""[m
+[32m+[m[32m    company_valuations = {[m
+[32m+[m[32m        "SpaceX": 137.0,[m
+[32m+[m[32m        "Stripe": 95.0,[m
+[32m+[m[32m        "Airbnb": 100.0,[m
+[32m+[m[32m    }[m
+[32m+[m[32m    v1 = company_valuations.get(company1, 0.0)[m
+[32m+[m[32m    v2 = company_valuations.get(company2, 0.0)[m
+[32m+[m[32m    return f"{company1}: {v1}B USD vs {company2}: {v2}B USD"[m
+[32m+[m
+[32m+[m[32mtools = [get_stock_price, get_stock_history, get_market_valuation_of_private_company, compare_companies][m
+[32m+[m
+[32m+[m[32mprompt = hub.pull("hwchase17/react")[m
+[32m+[m
+[32m+[m[32magent = create_react_agent(llm=llm, tools=tools, prompt=prompt)[m
+[32m+[m
+[32m+[m[32magent_executor = AgentExecutor([m
+[32m+[m[32m    agent=agent,[m
+[32m+[m[32m    tools=tools,[m
+[32m+[m[32m    verbose=True,[m
+[32m+[m[32m    handle_parsing_errors=True[m
+[32m+[m[32m)[m
+[32m+[m
+[32m+[m[32m# Interactive CLI loop[m
+[32m+[m[32mprint("Finance Agent ready! Type 'exit' to quit.\n")[m
+[32m+[m[32mwhile True:[m
+[32m+[m[32m    user_input = input("You: ")[m
+[32m+[m[32m    if user_input.lower() == "exit":[m
+[32m+[m[32m        break[m
+[32m+[m[32m    result = agent_executor.invoke({"input": user_input})[m
+[32m+[m[32m    print(f"\nAgent: {result['output']}\n")[m
+\ No newline at end of file[m
+[1mdiff --git a/pyproject.toml b/pyproject.toml[m
+[1mindex 4512498..a049545 100644[m
+[1m--- a/pyproject.toml[m
+[1m+++ b/pyproject.toml[m
+[36m@@ -23,3 +23,12 @@[m [mbuild-backend = "hatchling.build"[m
+ [m
+ [tool.uv][m
+ package = false[m
+[32m+[m
+[32m+[m
+[32m+[m[32m[project][m
+[32m+[m[32mname = "course-gen-ai"[m
+[32m+[m[32mversion = "0.1.0"[m
+[32m+[m
+[32m+[m[32m[tool.env][m
+[32m+[m[32mGROQ_API_KEY = "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"[m
+[41m+[m
