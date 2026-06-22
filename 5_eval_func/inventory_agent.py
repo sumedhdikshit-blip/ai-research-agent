@@ -1,6 +1,7 @@
 from langgraph.prebuilt import create_react_agent
 from langchain_groq import ChatGroq
 from langchain.tools import tool
+from langchain_core.messages import HumanMessage
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -42,6 +43,19 @@ agent = create_react_agent(
     prompt=system_prompt
 )
 
-# Run it
-response = agent.invoke({"messages": [("user", "Is iPhone 15 available?")]})
-print(response["messages"][-1].content)
+
+def run(question: str):
+    result = agent.invoke({"messages": [HumanMessage(content=question)]})
+    return result["messages"][-1].content
+    
+
+if __name__ == "__main__":
+    
+    question = "Is iPhone 15 available?"
+    print(run(question))
+
+
+
+
+
+
