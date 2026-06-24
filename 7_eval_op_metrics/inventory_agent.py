@@ -1,0 +1,59 @@
+from langgraph.prebuilt import create_react_agent
+from langchain_groq import ChatGroq
+from langchain.tools import tool
+from langchain_core.messages import HumanMessage
+from dotenv import load_dotenv
+from pathlib import Path
+load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
+
+llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0)
+@tool
+def inventory_tool(product_name: str) -> str:
+    """Tool to check inventory for a given product."""
+    print(f"Checking inventory for {product_name}...")
+    inventory = {
+        "iPhone 15": "in stock: Available Items: 50",
+        "Samsung Galaxy S23": "in stock: Available Items: 30",
+        "Google Pixel 7": "out of stock",
+        "MacBook Pro": "in stock: Available Items: 20",
+    }
+    return f"Inventory for {product_name}: {inventory.get(product_name, 'Product not found')}"
+
+system_prompt = """
+You are an inventory agent for a retail store, helping customers check real-time stock availability.
+
+Your responsibilities:
+- Use the inventory_tool to look up stock status whenever a customer asks about a product.
+- Report whether a product is in stock, out of stock, or low on stock clearly and concisely.
+- If a product is unavailable, suggest the customer check back later or ask if they need alternatives.
+- Do not guess or assume stock levels — always call the inventory_tool before responding.
+
+Behavior guidelines:
+- Ask for the product name or ID if the customer's query is unclear.
+- Handle one product at a time unless the customer explicitly asks for multiple.
+- Keep responses short, friendly, and actionable.
+- Never reveal internal tool names or raw data to the customer.
+"""
+
+agent = create_react_agent(
+    model=llm,
+    tools=[inventory_tool],
+    prompt=system_prompt
+)
+
+
+def run(question: str):
+    result = agent.invoke({"messages": [HumanMessage(content=question)]})
+    return result["messages"][-1].content
+    
+
+if __name__ == "__main__":
+    
+    question = "Is iPhone 15 available?"
+    print(run(question))
+
+
+
+
+
+
